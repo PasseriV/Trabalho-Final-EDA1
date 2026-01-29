@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include "estrutura.h"
 
 int main(){
     int i = 0;
