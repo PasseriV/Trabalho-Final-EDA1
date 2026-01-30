@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "estrutura.h"
+#include "funcoes_trabalho.h"
 
 int main(){
-    int i = 0;
-    printf("%d\n", i);
+    tela_inicial();
     return 0;
 }
