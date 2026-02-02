@@ -16,7 +16,7 @@ typedef struct lista_clientes {
 
 typedef struct produto {
     int codigo;
-    char nome[100];
+    char *nome;
     float preco;
     int quantidade;
     struct produto *prox;
