@@ -27,5 +27,15 @@ typedef struct lista_produtos {
     int size;
 } ListaProdutos;
 
+typedef struct carrinho {
+    Produto *produto;
+    struct carrinho *prox;
+}ItemCarrinho;
+
+typedef struct lista_carrinho {
+    ItemCarrinho *head;
+    Cliente *cliente;
+    int size;
+}ListaCarrinho;
 
 #endif

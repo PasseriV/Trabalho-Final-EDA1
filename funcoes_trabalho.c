@@ -5,6 +5,76 @@
 #include "structs_trabalho.h"
 #include "funcoes_trabalho.h"
 
+void adicionar_produtos_car(int codigo, ListaCarrinho* lista_car, ListaProdutos* lista_prod){
+    Produto* produto = buscar_por_codigo(codigo, lista_prod);
+    if(produto == NULL){
+        printf("Produto de codigo %d nao cadastrado!\n", codigo);
+        return;
+    }
+    if(produto->quantidade == 0){
+        printf("Produto esgotado!\n");
+        return;
+    }
+    int quantidade;
+    printf("Disponivel [%d]. Quantos do produto %s deseja comprar? ", codigo, produto->nome);
+    scanf("%d", &quantidade);
+    if(quantidade > produto->quantidade){
+        printf("Quantidade pedida maior que estoque!\n");
+        return;
+    }
+    ItemCarrinho* item = cria_item();
+    item->produto = produto;
+    item->prox = lista_car->head;
+    lista_car->head = item;
+    lista_car->size++;
+}
+
+void tela_adicionar_produtos(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProdutos* lista_prod){
+    char cpf[18];
+    int codigo;
+    printf("Para criar o carrinho, digite o CPF do cliente: ");
+    if (lista_cli->head == NULL) {
+        printf("Ainda nao ha clientes cadastrados!\n");
+        Sleep(1000);
+        return;
+    }
+    if(lista_prod->head == NULL){
+        printf("Ainda nao ha produtos cadastrados!\n");
+        Sleep(1000);
+        return;
+    }
+    scanf("%s", cpf);
+    Cliente* cliente = buscar_por_cpf(cpf, lista_cli);
+    if(cliente == NULL){
+        printf("Cliente de CPF %s nao cadastrado!\n", cpf);
+        return;
+    }
+    printf("------Carrinho de %s------\n", cliente->nome);
+    do{
+        printf("\nDigite o codigo do produto que deseja adicionar ao carrinho: ");
+        scanf("%d", &codigo);
+
+    }while(codigo!=0);
+
+}
+
+ListaCarrinho* create_carrinho() {
+    ListaCarrinho* L = malloc(sizeof(ListaCarrinho));
+    L->cliente = malloc(sizeof(Cliente));
+    L->head = NULL;
+    L->size = 0;
+
+    return L;
+}
+
+ItemCarrinho* cria_item(){
+    ItemCarrinho *item = malloc(sizeof(ItemCarrinho));
+    item->produto = malloc(sizeof(Produto));
+    item->prox = NULL;
+
+    return item;
+}
+
 void remover_produto(int codigo, ListaProdutos *lista){
     Produto *p_anterior = lista->head;
     Produto *lixo = NULL;
@@ -207,7 +277,7 @@ void busca_produto(ListaProdutos *lista){
 }
 
 
-Cliente* buscar_por_cpf(char *cpf, ListaCliente *lista){
+Cliente* buscar_por_cpf(char cpf[], ListaCliente *lista){
     Cliente *p_aux = lista->head;
     printf("Buscando cliente de CPF: %s...\n", cpf);
     while(p_aux != NULL && strcmp(p_aux->cpf, cpf))
@@ -403,12 +473,10 @@ void listar_produtos(ListaProdutos *L){
     }
 }
 
-void tela_cliente(){
+void tela_cliente(ListaCliente* lista){
     Sleep(100);
     system("cls");
     int opcao;
-    ListaCliente *lista = NULL;
-    lista = create_list();
 
 do{
     printf("------Gerenciamento de clientes------\n");
@@ -457,8 +525,7 @@ do{
         break;
     case 6:
         printf("Voltando para tela inicial.\n");
-        tela_inicial();
-        break;
+        return;
     default:
         printf("Opcao invalida, tente novamente!\n");
         Sleep(1000);
@@ -471,11 +538,10 @@ do{
 
 }
 
-void tela_produtos() {
+void tela_produtos(ListaProdutos* lista) {
     Sleep(100);
     system("cls");
     int opcao;
-    ListaProdutos *lista = create_list_prod(); 
 
     do {
         printf("------Gerenciamento de produtos------\n");
@@ -522,9 +588,8 @@ void tela_produtos() {
                 system("cls");
                 break;
             case 6:
-               printf("Voltando para tela inicial.\n");
-                tela_inicial();
-                break;
+                printf("Voltando para tela inicial.\n");
+                return;
             default:
                 printf("Opcao invalida, tente novamente!\n");
                 Sleep(1000);
@@ -538,60 +603,91 @@ void tela_produtos() {
 }
 
 
-void tela_compra(){
+void tela_compra(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProdutos* lista_prod){
+    Sleep(100);
+    system("cls");
 
     int opcao;
-    system("cls");
-    printf("------Modo Compra------");
-    printf("Opcoes: \n");
-    printf("1- Adicionar produtos ao carrinho\n");
-    printf("2- Listar produtos do carrinho\n");
-    printf("3- Retirar produtos do carrinho\n");
-    printf("4- Retornar para tela inicial\n");
-    printf("Escolha a opcao desejada: ");
-    scanf("%d", &opcao);
-    if(opcao == 1) return;
-    else if(opcao == 2) return;
-    else if(opcao == 3) return;
-    else if(opcao == 4) tela_inicial();
-    else{
-        printf("Opcao invalida, tente novamente!\n");
-        Sleep(1000);
-        getchar();
-        tela_compra();
-    }
+    
+    do {
+        printf("------Modo Compra------\n");
+        printf("Opcoes:\n");
+        printf("1- Adicionar produtos ao carrinho\n");
+        printf("2- Listar produtos do carrinho\n");
+        printf("3- Retirar produtos do carrinho\n");
+        printf("4- Retornar para tela inicial\n");
+        printf("Escolha a opcao desejada: ");
+        scanf("%d", &opcao);
+        getchar();  
+
+        switch (opcao) {
+            case 1:
+                tela_adicionar_produtos(lista_car, lista_cli, lista_prod);
+                break;
+            case 2:               
+                printf("\nPressione ENTER para voltar ao menu");
+                getchar();
+                system("cls");
+                break;
+            case 3:
+                printf("\nPressione ENTER para voltar ao menu");
+                getchar();
+                system("cls");
+                break;
+            case 4:
+                printf("Voltando para tela inicial.\n");
+                return;
+            default:
+                printf("Opcao invalida, tente novamente!\n");
+                Sleep(1000);
+                getchar();
+                system("cls");
+                break;
+        }
+    } while (opcao != 4);
 }
 
 void tela_inicial(){
     int opcao;
-    system("cls");
-    printf("====================================================================\n");
-    printf("Bem-vindo ao sistema de gerenciamento de clientes e produtos\n");
-    printf("====================================================================\n");
-    printf("------Opcoes:------\n");
-    printf("1- Gerenciamente de Clientes\n");
-    printf("2- Gerenciamento de Produtos\n");
-    printf("3- Modo Compra\n");
-    printf("4- Sair\n");
-    printf("Escolha a opcao desejada: ");
-    scanf("%d", &opcao);
-    printf("\n");
 
-    if(opcao == 1){ 
-        tela_cliente();
-        getchar();
-    }
+    ListaCarrinho *lista_car = create_carrinho();
+    ListaProdutos *lista_prod = create_list_prod();
+    ListaCliente *lista_cli = create_list();
+    do {
+        system("cls");
+        printf("====================================================================\n");
+        printf("Bem-vindo ao sistema de gerenciamento de clientes e produtos\n");
+        printf("====================================================================\n");
+        printf("------Opcoes:------\n");
+        printf("1- Gerenciamento de Clientes\n");
+        printf("2- Gerenciamento de Produtos\n");
+        printf("3- Modo Compra\n");
+        printf("4- Sair\n");
+        printf("Escolha a opcao desejada: ");
+        scanf("%d", &opcao);
+        getchar(); 
 
-    else if(opcao == 2) tela_produtos();
+        printf("\n");
 
-    else if(opcao == 3) tela_compra();
-
-    else if(opcao == 4) return;
-
-    else{
-        printf("Opcao invalida, tente novamente!\n");
-        Sleep(1000);
-        getchar();
-        tela_inicial();
-    }
+        switch (opcao) {
+            case 1:
+                tela_cliente(lista_cli);
+                break;
+            case 2:
+                tela_produtos(lista_prod);
+                break;
+            case 3:
+                tela_compra(lista_car, lista_cli, lista_prod);
+                break;
+            case 4:
+                printf("Encerrando o sistema...\n");
+                Sleep(1000);
+                break;
+            default:
+                printf("Opcao invalida, tente novamente!\n");
+                Sleep(1000);
+                system("cls");
+                break;
+        }
+    } while (opcao != 4);
 }
