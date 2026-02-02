@@ -29,6 +29,7 @@ typedef struct lista_produtos {
 
 typedef struct carrinho {
     Produto *produto;
+    int quantidade;
     struct carrinho *prox;
 }ItemCarrinho;
 

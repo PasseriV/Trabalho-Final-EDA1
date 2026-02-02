@@ -5,6 +5,23 @@
 #include "structs_trabalho.h"
 #include "funcoes_trabalho.h"
 
+void listar_produtos_car(ListaCarrinho* lista_car){
+    int quantidade_total = 0;
+    float preco_total = 0;
+    if(lista_car->head==NULL){
+        printf("O carrinho esta vazio.\n");
+        return;
+    }
+    printf("Carrinho de %s\n", lista_car->cliente->nome);
+    printf("Produto / Preco (Unid.) / Quantidade\n");
+    for(ItemCarrinho*p_aux=lista_car->head; p_aux!=NULL; p_aux = p_aux->prox){
+        printf("%s / R$%.2f / %d\n", p_aux->produto->nome, p_aux->produto->preco, p_aux->quantidade);
+        preco_total+=p_aux->produto->preco*p_aux->quantidade;
+        quantidade_total+=p_aux->quantidade;
+    }
+    printf("Total: R$%,2f, %d itens", preco_total, quantidade_total);
+}
+
 void adicionar_produtos_car(int codigo, ListaCarrinho* lista_car, ListaProdutos* lista_prod){
     Produto* produto = buscar_por_codigo(codigo, lista_prod);
     if(produto == NULL){
@@ -20,6 +37,7 @@ void adicionar_produtos_car(int codigo, ListaCarrinho* lista_car, ListaProdutos*
     scanf("%d", &quantidade);
     if(quantidade > produto->quantidade){
         printf("Quantidade pedida maior que estoque!\n");
+        Sleep(1000);
         return;
     }
     ItemCarrinho* item = cria_item();
@@ -27,6 +45,8 @@ void adicionar_produtos_car(int codigo, ListaCarrinho* lista_car, ListaProdutos*
     item->prox = lista_car->head;
     lista_car->head = item;
     lista_car->size++;
+    item->quantidade += quantidade;
+    printf("%d %s adicionados ao carrinho.\n", item->quantidade, item->produto->nome);
 }
 
 void tela_adicionar_produtos(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProdutos* lista_prod){
@@ -49,11 +69,12 @@ void tela_adicionar_produtos(ListaCarrinho* lista_car, ListaCliente* lista_cli, 
         printf("Cliente de CPF %s nao cadastrado!\n", cpf);
         return;
     }
-    printf("------Carrinho de %s------\n", cliente->nome);
+    lista_car->cliente = cliente;
+    printf("------Carrinho de %s------\n", lista_car->cliente->nome);
     do{
         printf("\nDigite o codigo do produto que deseja adicionar ao carrinho: ");
         scanf("%d", &codigo);
-
+        adicionar_produtos_car(codigo, lista_car, lista_prod);
     }while(codigo!=0);
 
 }
@@ -70,6 +91,7 @@ ListaCarrinho* create_carrinho() {
 ItemCarrinho* cria_item(){
     ItemCarrinho *item = malloc(sizeof(ItemCarrinho));
     item->produto = malloc(sizeof(Produto));
+    item->quantidade = 0;
     item->prox = NULL;
 
     return item;
@@ -624,7 +646,8 @@ void tela_compra(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProduto
             case 1:
                 tela_adicionar_produtos(lista_car, lista_cli, lista_prod);
                 break;
-            case 2:               
+            case 2:
+                listar_produtos_car(lista_car);               
                 printf("\nPressione ENTER para voltar ao menu");
                 getchar();
                 system("cls");
