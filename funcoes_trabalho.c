@@ -5,125 +5,172 @@
 #include "structs_trabalho.h"
 #include "funcoes_trabalho.h"
 
+/* Funcao para listar produtos do carrinho */
+
 void listar_produtos_car(ListaCarrinho* lista_car){
     int quantidade_total = 0;
     float preco_total = 0;
+
     if(lista_car->head==NULL){
-        printf("O carrinho esta vazio.\n");
+        printf("\033[33m[AVISO]\033[0m O carrinho esta vazio.\n");
         return;
     }
-    printf("Carrinho de %s\n", lista_car->cliente->nome);
-    printf("Produto / Preco (Unid.) / Quantidade\n");
+
+    printf("\n\033[1;36m============================== CARRINHO DE COMPRAS =============================\033[0m\n");
+    printf("Cliente: \033[1m%s\033[0m\n", lista_car->cliente->nome);
+
+    printf("\033[36m%-30s | %-12s | %-10s\033[0m\n", "PRODUTO", "PRECO (UN)", "QTD");
+    printf("\033[36m--------------------------------------------------------------------------------\033[0m\n");
+
     for(ItemCarrinho*p_aux=lista_car->head; p_aux!=NULL; p_aux = p_aux->prox){
-        printf("%s / R$%.2f / %d\n", p_aux->produto->nome, p_aux->produto->preco, p_aux->quantidade);
+        printf("%-30s | R$ %8.2f | %-10d\n",
+               p_aux->produto->nome, p_aux->produto->preco, p_aux->quantidade);
+
         preco_total+=p_aux->produto->preco*p_aux->quantidade;
         quantidade_total+=p_aux->quantidade;
     }
-    printf("Total: R$%.2f, %d itens", preco_total, quantidade_total);
+
+    printf("\033[36m--------------------------------------------------------------------------------\033[0m\n");
+    printf("\033[32m[OK]\033[0m Total: \033[1mR$%.2f\033[0m, %d itens\n", preco_total, quantidade_total);
 }
+
+/* Funcao para adicionar produtos no carrinho do cliente */
 
 void adicionar_produtos_car(int codigo, ListaCarrinho* lista_car, ListaProdutos* lista_prod){
     Produto* produto = buscar_por_codigo(codigo, lista_prod);
+
     if(produto == NULL){
-        printf("Produto de codigo %d nao cadastrado!\n", codigo);
+        printf("\033[31m[ERRO]\033[0m Produto de codigo %d nao cadastrado!\n", codigo);
         return;
     }
     if(produto->quantidade == 0){
-        printf("Produto esgotado!\n");
+        printf("\033[33m[AVISO]\033[0m Produto esgotado!\n");
         return;
     }
+
     int quantidade;
-    printf("Disponivel [%d]. Quantos do produto %s deseja comprar? ", produto->quantidade, produto->nome);
+    printf("\033[36mDisponivel\033[0m [%d]. Quantos do produto \033[1m%s\033[0m deseja comprar? ",
+           produto->quantidade, produto->nome);
     scanf("%d", &quantidade);
+    getchar();
+
     if(quantidade > produto->quantidade){
-        printf("Quantidade pedida maior que estoque!\n");
+        printf("\033[31m[ERRO]\033[0m Quantidade pedida maior que o estoque!\n");
         Sleep(1000);
         return;
     }
+
     ItemCarrinho* item = cria_item();
     item->produto = produto;
     item->prox = lista_car->head;
     lista_car->head = item;
     lista_car->size++;
     item->quantidade += quantidade;
-    printf("%d %s adicionados ao carrinho.\n", item->quantidade, item->produto->nome);
+
+    printf("\033[32m[OK]\033[0m %d unidade(s) de \033[1m%s\033[0m adicionada(s) ao carrinho.\n",
+           item->quantidade, item->produto->nome);
 }
+
+/* Tela para receber dados para a funcao de adicionar produtos */
 
 void tela_adicionar_produtos(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProdutos* lista_prod){
     char cpf[18];
     int codigo;
+
+    printf("\033[1;36m=========================== CRIAR / EDITAR CARRINHO ===========================\033[0m\n");
+    printf("\033[36mInforme o CPF do cliente para vincular o carrinho.\033[0m\n\n");
     printf("Para criar o carrinho, digite o CPF do cliente: ");
+
     if (lista_cli->head == NULL) {
-        printf("Ainda nao ha clientes cadastrados!\n");
+        printf("\033[33m[AVISO]\033[0m Ainda nao ha clientes cadastrados!\n");
         Sleep(1000);
         return;
     }
     if(lista_prod->head == NULL){
-        printf("Ainda nao ha produtos cadastrados!\n");
+        printf("\033[33m[AVISO]\033[0m Ainda nao ha produtos cadastrados!\n");
         Sleep(1000);
         return;
     }
+
     scanf("%s", cpf);
-    ajusta_cpf(cpf) ;
+    getchar();
+    ajusta_cpf(cpf);
+
     Cliente* cliente = buscar_por_cpf(cpf, lista_cli);
     if(cliente == NULL){
-        printf("Cliente de CPF %s nao cadastrado!\n", cpf);
+        printf("\033[31m[ERRO]\033[0m Cliente de CPF %s nao cadastrado!\n", cpf);
         return;
     }
+
     lista_car->cliente = cliente;
+
+    printf("\n\033[32m[OK]\033[0m Carrinho vinculado ao cliente: \033[1m%s\033[0m\n", lista_car->cliente->nome);
+    printf("\033[36m--------------------------------------------------------------------------------\033[0m\n");
+
     printf("------Carrinho de %s------\n", lista_car->cliente->nome);
+
     do{
-        //o looping infinito - era bom perguntar se a pessoa quer comprar outra coisa pra terminar o while
-        printf("\nDigite o codigo do produto que deseja adicionar ao carrinho: ");
+        printf("\nDigite o codigo do produto que deseja adicionar ao carrinho \033[36m(0 para sair)\033[0m: ");
         scanf("%d", &codigo);
+        getchar();
+
+        /* Mesma chamada, mesma logica */
         adicionar_produtos_car(codigo, lista_car, lista_prod);
+
     }while(codigo!=0);
 
+    printf("\n\033[32m[OK]\033[0m Retornando ao menu do Modo Compra...\n");
 }
+
+/* Funcao para retirar produtos do carrinho */
 
 void retirar_produto_carrinho(ListaCarrinho* lista_car, ListaProdutos* lista_prod){
     int codigo;
 
     if (lista_car->head == NULL) {
-        printf("Nao ha produtos no carrinho!\n");
+        printf("\033[33m[AVISO]\033[0m Nao ha produtos no carrinho!\n");
         Sleep(1000);
         return;
     }
+
     ItemCarrinho *atual = lista_car->head;
 
-//listar produtos do carrinho para saber quantos ainda tem pra remover
-
+    // listar produtos do carrinho para saber quantos ainda tem pra remover
     int i = 1;
-    printf("\n-----------Lista de Produtos do Carrinho------------\n");
+    printf("\n\033[1;36m========================== PRODUTOS NO CARRINHO ==========================\033[0m\n");
 
     while(atual != NULL){
-        printf("\n Produto %d:\n ", i);
-        printf("Nome: %s | codigo: %d | quantidade: %d\n", atual->produto->nome, atual->produto->codigo, atual->quantidade);
+        printf("\n\033[36m[%d]\033[0m ", i);
+        printf("Nome: \033[1m%s\033[0m | Codigo: \033[1m%d\033[0m | Quantidade: \033[1m%d\033[0m\n",
+               atual->produto->nome, atual->produto->codigo, atual->quantidade);
         atual = atual->prox;
         i++;
-        }
-//--------------------------
-        printf("Insira o codigo do produto que deseja remover:");
-        scanf("%d", &codigo);
-        while(getchar() != '\n');
-    
-        Produto* produto = buscar_por_codigo(codigo, lista_prod);
-        if(produto == NULL){
-            printf("Produto de codigo %d nao cadastrado!\n", codigo);
-            return;
-        }
-        ItemCarrinho* anterior = NULL;
-        atual = lista_car->head;
+    }
 
-        while (atual != NULL && atual->produto->codigo != codigo) {
-            anterior = atual;
-             atual = atual->prox;
-         }
+    printf("\n\033[36m-------------------------------------------------------------------------\033[0m\n");
+    printf("Insira o codigo do produto que deseja remover: ");
+    scanf("%d", &codigo);
+    while(getchar() != '\n');
 
-        if (atual == NULL) {
-        printf("Produto de codigo %d nao esta no carrinho!\n", codigo);
+    Produto* produto = buscar_por_codigo(codigo, lista_prod);
+    if(produto == NULL){
+        printf("\033[31m[ERRO]\033[0m Produto de codigo %d nao cadastrado!\n", codigo);
         return;
-        }
+    }
+
+    ItemCarrinho* anterior = NULL;
+    atual = lista_car->head;
+
+    while (atual != NULL && atual->produto->codigo != codigo) {
+        anterior = atual;
+        atual = atual->prox;
+    }
+
+    if (atual == NULL) {
+        printf("\033[31m[ERRO]\033[0m Produto de codigo %d nao esta no carrinho!\n", codigo);
+        return;
+    }
+
     if (anterior == NULL) {
         // Remover do início da lista
         lista_car->head = atual->prox;
@@ -132,18 +179,19 @@ void retirar_produto_carrinho(ListaCarrinho* lista_car, ListaProdutos* lista_pro
         anterior->prox = atual->prox;
     }
 
-    printf("Removendo produto '%s' do carrinho...\n", atual->produto->nome);
+    printf("\033[33m[AVISO]\033[0m Removendo produto '\033[1m%s\033[0m' do carrinho...\n", atual->produto->nome);
     free(atual);
-   printf("Produto removido do carrinho.\n");
+    printf("\033[32m[OK]\033[0m Produto removido do carrinho.\n");
 }
 
-ListaCarrinho* create_carrinho() {
-    ListaCarrinho* L = malloc(sizeof(ListaCarrinho));
-    L->cliente = malloc(sizeof(Cliente));
-    L->head = NULL;
-    L->size = 0;
+/* Funcao para criar cada item do carrinho */
 
-    return L;
+ListaCarrinho* create_carrinho() { 
+    ListaCarrinho* L = malloc(sizeof(ListaCarrinho)); 
+    L->cliente = malloc(sizeof(Cliente)); 
+    L->head = NULL; 
+    L->size = 0; 
+    return L; 
 }
 
 ItemCarrinho* cria_item(){
@@ -155,18 +203,20 @@ ItemCarrinho* cria_item(){
     return item;
 }
 
+/* Funcao para remover produto do sistema */
 
 void remover_produto(int codigo, ListaProdutos *lista){
     Produto *p_anterior = lista->head;
     Produto *lixo = NULL;
 
-    printf("Buscando produto de codigo: %d...\n", codigo);
+    printf("\033[36m[INFO]\033[0m Buscando produto de codigo: \033[1m%d\033[0m...\n", codigo);
 
     if (p_anterior->codigo == codigo) {
-        printf("Removendo produto do sistema...\n");
+        printf("\033[33m[AVISO]\033[0m Removendo produto do sistema...\n");
         lixo = p_anterior;             
         lista->head = lixo->prox;      
         free(lixo);
+        printf("\033[32m[OK]\033[0m Produto removido com sucesso.\n");
         return;
     }
 
@@ -178,29 +228,37 @@ void remover_produto(int codigo, ListaProdutos *lista){
     }
 
     if(lixo != NULL){
-        printf("Removendo produto do sistema...\n");
+        printf("\033[33m[AVISO]\033[0m Removendo produto do sistema...\n");
         p_anterior->prox = lixo->prox;  
         free(lixo);
+        printf("\033[32m[OK]\033[0m Produto removido com sucesso.\n");
     }
     else{
-        printf("Produto de codigo %d nao cadastrado!", codigo);
+        printf("\033[31m[ERRO]\033[0m Produto de codigo \033[1m%d\033[0m nao cadastrado!\n", codigo);
         return;
     }
 }
 
+/* Tela para receber a funcao de remover produtos do sistema */
 
 void tela_remover_produto(ListaProdutos *lista){
     int codigo;
+
     if (lista->head == NULL) {
-        printf("Ainda nao ha produtos cadastrados!\n");
+        printf("\033[33m[AVISO]\033[0m Ainda nao ha produtos cadastrados!\n");
         Sleep(1000);
         return;
     }
 
+    printf("\033[1;36m============================= REMOVER PRODUTO =============================\033[0m\n");
     printf("Digite o codigo do produto que deseja remover do sistema: ");
+
     scanf("%d", &codigo);
-    remover_produto(codigo,lista);
+    getchar();
+    remover_produto(codigo, lista);
 }
+
+/* Funcao para ajustar cpf digitado */
 
 void ajusta_cpf(char *cpf_digitado){
     int i;
@@ -211,18 +269,20 @@ void ajusta_cpf(char *cpf_digitado){
      cpf_digitado[j]= '\0';
 }
 
+/* Funcao para remover cliente do sistema */
 
 void remover_cliente(char cpf[], ListaCliente *lista){
     Cliente *p_anterior = lista->head;
     Cliente *lixo = NULL;
 
-    printf("Buscando cliente de CPF: %s...\n", cpf);
+    printf("\033[36m[INFO]\033[0m Buscando cliente de CPF: \033[1m%s\033[0m...\n", cpf);
 
     if (strcmp(p_anterior->cpf, cpf) == 0) {
-        printf("Removendo cliente do sistema...\n");
+        printf("\033[33m[AVISO]\033[0m Removendo cliente do sistema...\n");
         lixo = p_anterior;             
         lista->head = lixo->prox;      
         free(lixo);
+        printf("\033[32m[OK]\033[0m Cliente removido com sucesso.\n");
         return;
     }
 
@@ -234,123 +294,167 @@ void remover_cliente(char cpf[], ListaCliente *lista){
     }
 
     if(lixo != NULL){
-        printf("Removendo cliente do sistema...\n");
+        printf("\033[33m[AVISO]\033[0m Removendo cliente do sistema...\n");
         p_anterior->prox = lixo->prox;  
         free(lixo);
+        printf("\033[32m[OK]\033[0m Cliente removido com sucesso.\n");
     }
     else{
-        printf("Cliente de CPF %s nao cadastrado!", cpf);
+        printf("\033[31m[ERRO]\033[0m Cliente de CPF \033[1m%s\033[0m nao cadastrado!\n", cpf);
         return;
     }
 }
+
+/* Tela que recebe a funcao de remover cliente do sistema */
 
 void tela_remover_cliente(ListaCliente *lista){
     char cpf[18];
+
     if (lista->head == NULL) {
-        printf("Ainda nao ha clientes cadastrados!\n");
+        printf("\033[33m[AVISO]\033[0m Ainda nao ha clientes cadastrados!\n");
         Sleep(1000);
         return;
     }
+
+    printf("\033[1;36m============================= REMOVER CLIENTE =============================\033[0m\n");
     printf("Digite o CPF do cliente que deseja remover do sistema: ");
+
     scanf("%s", cpf);
-    ajusta_cpf(cpf) ;
-    remover_cliente(cpf,lista);
+    getchar();
+    ajusta_cpf(cpf);
+
+    remover_cliente(cpf, lista);
 }
 
+/* Funcao para editar produto do sistema */
 
 void editar_produto(Produto *produto){
     free(produto->nome);
-    produto -> nome = malloc(100*sizeof(char));
-    printf("Digite novos dados do produto: ");
+    produto->nome = malloc(100*sizeof(char));
 
-    printf("Codigo: ");
+    printf("\n\033[1;36m=========================== ATUALIZAR DADOS DO PRODUTO ===========================\033[0m\n");
+    printf("\033[36mPreencha os novos dados abaixo:\033[0m\n\n");
+
+    printf("\033[1mCodigo:\033[0m ");
     scanf("%d", &produto->codigo);
     getchar();
 
-    printf("Nome: ");
-    fgets(produto->nome, 100, stdin);
+    printf("\033[1mNome:\033[0m ");
+    scanf(" %[^\n]", produto->nome);
+    getchar();
     
-    printf("Preco: ");
+    printf("\033[1mPreco:\033[0m ");
     scanf("%f", &produto->preco);
     getchar();
 
-    printf("Quantidade: ");
+    printf("\033[1mQuantidade (estoque):\033[0m ");
     scanf("%d", &produto->quantidade);
     getchar();
+
+    printf("\n\033[32m[OK]\033[0m Produto atualizado com sucesso.\n");
 }
+
+/* Tela que recebe a funcao para editar produto do sistema */
 
 void tela_editar_produto(ListaProdutos *lista){
     int codigo;
+
     if (lista->head == NULL) {
-        printf("Ainda nao ha produtos cadastrados!\n");
+        printf("\033[33m[AVISO]\033[0m Ainda nao ha produtos cadastrados!\n");
         Sleep(1000);
         return;
     }
+
+    printf("\033[1;36m============================= EDITAR PRODUTO =============================\033[0m\n");
     printf("Digite o codigo do produto que deseja editar as informacoes: ");
+
     scanf("%d", &codigo);
+    getchar();
     Produto* produto = buscar_por_codigo(codigo, lista);
+
     if(produto) editar_produto(produto);
     else{
-        printf("Produto de codigo %d nao cadastrado!", codigo);
+        printf("\033[31m[ERRO]\033[0m Produto de codigo \033[1m%d\033[0m nao cadastrado!\n", codigo);
         return;
     }
 }
 
+/* Funcao para editar cliente do sistema */
+
 void editar_cliente(Cliente *cliente){
-    free(cliente ->cpf);
-    free(cliente ->email);
+    free(cliente->cpf);
+    free(cliente->email);
     free(cliente->nome);
     free(cliente->nascimento);
-    cliente ->cpf =  malloc(17 * sizeof(char));
-    cliente ->email = malloc(100 * sizeof(char));
-    cliente ->nome = malloc(100 * sizeof(char));
-    cliente ->nascimento =  malloc(15 * sizeof(char));
-    printf("Digite novos dados do cliente: ");
 
-    printf("\nCPF: ");
+    cliente->cpf =  malloc(17 * sizeof(char));
+    cliente->email = malloc(100 * sizeof(char));
+    cliente->nome = malloc(100 * sizeof(char));
+    cliente->nascimento =  malloc(15 * sizeof(char));
+
+    printf("\n\033[1;36m=========================== ATUALIZAR DADOS DO CLIENTE ===========================\033[0m\n");
+    printf("\033[36mPreencha os novos dados abaixo:\033[0m\n");
+
+    printf("\n\033[1mCPF:\033[0m ");
     scanf(" %[^\n]", cliente->cpf);
-    ajusta_cpf(cliente->cpf) ;
+    ajusta_cpf(cliente->cpf);
     getchar();
 
-    printf("Nome: ");
-    fgets(cliente->nome, 100, stdin);
+    printf("\033[1mNome:\033[0m ");
+    scanf(" %[^\n]", cliente->nome);
+    getchar();
 
-    printf("Email: ");
-    fgets(cliente->email, 100, stdin);
+    printf("\033[1mEmail:\033[0m ");
+    scanf(" %[^\n]", cliente->email);
+    getchar();
     
-    printf("Data de nascimento: ");
-    fgets(cliente->nascimento, 15, stdin);
+    printf("\033[1mData de nascimento:\033[0m ");
+    scanf(" %[^\n]", cliente->nascimento);
+    getchar();
+
+    printf("\n\033[32m[OK]\033[0m Cliente atualizado com sucesso.\n");
 }
+
+/* Tela que recebe a funcao de edicao de cliente */
 
 void tela_editar_cliente(ListaCliente *lista){
     char cpf[18];
+
     if (lista->head == NULL) {
-        printf("Ainda nao ha clientes cadastrados!\n");
+        printf("\033[33m[AVISO]\033[0m Ainda nao ha clientes cadastrados!\n");
         Sleep(1000);
         return;
     }
+
+    printf("\033[1;36m============================= EDITAR CLIENTE =============================\033[0m\n");
     printf("Digite o CPF do cliente que deseja editar as informacoes: ");
+
     scanf("%s", cpf);
-    ajusta_cpf(cpf) ;
+    getchar();
+    ajusta_cpf(cpf);
     int i, j =0;
 
     for(i=0; cpf[i] != '\0'; i++){
         if(isdigit(cpf[i])){ cpf[j++]=cpf[i];}
     }
-     cpf[j]= '\0';
+    cpf[j]= '\0';
 
     Cliente* cliente = buscar_por_cpf(cpf, lista);
+
     if(cliente) editar_cliente(cliente);
     else{
-        printf("Cliente de CPF %s nao cadastrado!", cpf);
+        printf("\033[31m[ERRO]\033[0m Cliente de CPF \033[1m%s\033[0m nao cadastrado!\n", cpf);
         return;
     }
 }
 
+/* Funcoes que buscam produto pelo codigo */
 
 Produto* buscar_por_codigo(int codigo, ListaProdutos *lista){
     Produto *p_aux = lista->head;
-    printf("Buscando produto de codigo: %d...\n", codigo);
+
+    printf("\033[36m[INFO]\033[0m Buscando produto de codigo: \033[1m%d\033[0m...\n", codigo);
+
     while(p_aux != NULL && codigo != p_aux->codigo)
         p_aux = p_aux->prox;
 
@@ -360,53 +464,66 @@ Produto* buscar_por_codigo(int codigo, ListaProdutos *lista){
 void busca_produto(ListaProdutos *lista){
     int codigo;
     if (lista->head == NULL) {
-        printf("Ainda nao ha produtos cadastrados!\n");
+        printf("\033[33m[AVISO]\033[0m Ainda nao ha produtos cadastrados!\n");
         Sleep(1000);
         return;
     }
-    printf("Digite o codigo do produto: ");
+    printf("\033[1mDigite o codigo do produto:\033[0m ");
     scanf("%d", &codigo);
+    getchar();
+
     Produto* produto = buscar_por_codigo(codigo, lista);
     if(produto){
-        printf("Produto encontrado!\n");
-        printf("Nome: %s | codigo: %d | preco: %.2f | quantidade: %d\n",produto->nome, produto->codigo, produto->preco, produto->quantidade);
+        printf("\033[32m[OK]\033[0m Produto encontrado!\n");
+        printf("\033[36mNome:\033[0m %s | \033[36mCodigo:\033[0m %d | \033[36mPreco:\033[0m R$%.2f | \033[36mEstoque:\033[0m %d\n",
+               produto->nome, produto->codigo, produto->preco, produto->quantidade);
         return;
     }
     else{
-        printf("Produto de codigo %d nao cadastrado!", codigo);
+        printf("\033[31m[ERRO]\033[0m Produto de codigo %d nao cadastrado!\n", codigo);
         return;
     }
 }
 
+/* Funcoes que buscam cliente pelo cpf */
+
 Cliente* buscar_por_cpf(char cpf[], ListaCliente *lista){
     Cliente *p_aux = lista->head;
-    printf("Buscando cliente de CPF: %s...\n", cpf);
+
+    printf("\033[36m[INFO]\033[0m Buscando cliente de CPF: \033[1m%s\033[0m...\n", cpf);
+
     while(p_aux != NULL && strcmp(p_aux->cpf, cpf))
         p_aux = p_aux->prox;
+
     return p_aux;
 }
 
 void busca_cliente(ListaCliente *lista){
     char cpf[18];
     if (lista->head == NULL) {
-        printf("Ainda nao ha clientes cadastrados!\n");
+        printf("\033[33m[AVISO]\033[0m Ainda nao ha clientes cadastrados!\n");
         Sleep(1000);
         return;
     }
-    printf("Digite o CPF do cliente: ");
+    printf("\033[1mDigite o CPF do cliente:\033[0m ");
     scanf("%s", cpf);
+    getchar();
     ajusta_cpf(cpf);
+
     Cliente *cliente =  buscar_por_cpf(cpf, lista);
     if(cliente){
-        printf("Cliente encontrado!\n");
-        printf("Nome: %s | CPF: %s | Email: %s | Data de nascimento: %s\n",cliente->nome, cliente->cpf, cliente->email,cliente->nascimento);
+        printf("\033[32m[OK]\033[0m Cliente encontrado!\n");
+        printf("\033[36mNome:\033[0m %s | \033[36mCPF:\033[0m %s | \033[36mEmail:\033[0m %s | \033[36mNascimento:\033[0m %s\n",
+               cliente->nome, cliente->cpf, cliente->email, cliente->nascimento);
         return;
     }
     else{
-        printf("Cliente de CPF %s nao cadastrado!", cpf);
+        printf("\033[31m[ERRO]\033[0m Cliente de CPF %s nao cadastrado!\n", cpf);
         return;
     }
 }
+
+/* Funcao que cria elemento da lista de clientes */
 
 Cliente* criar_cliente(){
     Cliente *cli = malloc(sizeof(Cliente));
@@ -421,6 +538,8 @@ Cliente* criar_cliente(){
     return cli;
 
 }
+
+/* Funcao que cria elemento da lista de produtos */
 
 Produto* criar_produto(){
     Produto *prod = malloc(sizeof(Produto));
@@ -452,77 +571,86 @@ ListaProdutos* create_list_prod() {
     return L;
 }
 
+/* Tela que recebe as funcoes de cadastro de cliente */
+
 void tela_cadastrar_cliente(ListaCliente *L) {
     int qtde_cli = 0;
-    printf("Quantos clientes voce deseja cadastrar?\n");
+
+    printf("\033[1;36m============================= CADASTRO DE CLIENTES =============================\033[0m\n");
+    printf("Quantos clientes voce deseja cadastrar? ");
     scanf("%d", &qtde_cli);
     getchar();
 
     for(int i = 0; i< qtde_cli; i++){
-        printf("\n ----- Cliente [%d] ----- \n", i+1);
+        printf("\n\033[36m------------------------------ CLIENTE [%d/%d] ------------------------------\033[0m\n", i+1, qtde_cli);
 
         Cliente *novo_cli = criar_cliente();
         
         if (novo_cli == NULL) {
-        printf("Erro: não foi possível criar cliente!\n");
-        return;
+            printf("\033[31m[ERRO]\033[0m Nao foi possivel criar cliente!\n");
+            return;
         }
 
-        printf("\nCPF: ");
+        printf("\033[1mCPF:\033[0m ");
         scanf(" %[^\n]", novo_cli->cpf);
-        ajusta_cpf(novo_cli->cpf) ;
+        ajusta_cpf(novo_cli->cpf);
         getchar();
 
-        printf("Nome: ");
-        fgets(novo_cli->nome, 100, stdin);
+        printf("\033[1mNome:\033[0m ");
+        scanf(" %[^\n]", novo_cli->nome);
+        getchar();
 
-        printf("Email: ");
-        fgets(novo_cli->email, 100, stdin);
+        printf("\033[1mEmail:\033[0m ");
+        scanf(" %[^\n]", novo_cli->email);
+        getchar();
         
-        printf("Data de nascimento: ");
-        fgets(novo_cli->nascimento, 15, stdin);
-       
+        printf("\033[1mData de nascimento:\033[0m ");
+        scanf(" %[^\n]", novo_cli->nascimento);
+        getchar();
 
         novo_cli->prox = L->head;
         L->head = novo_cli;
         L->size++;
-
     }
 
-    printf("\nCadastro concluido! Pressione enter para voltar ao menu\n");
+    printf("\n\033[32m[OK]\033[0m Cadastro concluido! Pressione ENTER para voltar ao menu.\n");
     getchar();
 }
+
+/* Tela que recebe as funcoes para cadastrar produto */
 
 void tela_cadastrar_produto(ListaProdutos *L) {
     int qtde_prod = 0;
     
-    printf("Quantos produtos voce deseja cadastrar?\n");
+    printf("\033[1;36m============================= CADASTRO DE PRODUTOS =============================\033[0m\n");
+    printf("Quantos produtos voce deseja cadastrar? ");
     scanf("%d", &qtde_prod);
     getchar();  
 
     for(int i = 0; i < qtde_prod; i++) {
-        printf("\n  Produto  %d \n", i+1);
+        printf("\n\033[36m------------------------------ PRODUTO [%d/%d] ------------------------------\033[0m\n", i+1, qtde_prod);
 
         Produto *novo_prod = criar_produto();
 
-        //verif se há memoria para alocar
+        // verif se há memoria para alocar
         if (novo_prod == NULL) {
-            printf("Erro: não foi possível criar produto!\n");
+            printf("\033[31m[ERRO]\033[0m Nao foi possivel criar produto!\n");
             return;
         }
 
-        printf("Codigo: ");
+        printf("\033[1mCodigo:\033[0m ");
         scanf("%d", &novo_prod->codigo);
         getchar();
 
-        printf("Nome: ");
-        fgets(novo_prod->nome, 100, stdin);
+        printf("\033[1mNome:\033[0m ");
+        scanf(" %[^\n]", novo_prod->nome);
+        getchar();
         
-        printf("Preco: ");
+        printf("\033[1mPreco:\033[0m ");
         scanf("%f", &novo_prod->preco);
         getchar();
 
-        printf("Quantidade: ");
+        printf("\033[1mQuantidade (estoque):\033[0m ");
         scanf("%d", &novo_prod->quantidade);
         getchar();
 
@@ -531,227 +659,276 @@ void tela_cadastrar_produto(ListaProdutos *L) {
         L->size++;
     }
 
-    printf("\nCadastro concluido! Pressione enter para voltar ao menu\n");
+    printf("\n\033[32m[OK]\033[0m Cadastro concluido! Pressione ENTER para voltar ao menu.\n");
     getchar();
 }
+
+/* Funcao para listar clientes */
 
 void listar_clientes(ListaCliente *L){
 
     if (L->head == NULL) {
-        printf("\n Nao ha clientes cadastrados!\n");
+        printf("\n\033[33m[AVISO]\033[0m Nao ha clientes cadastrados!\n");
         return;
-
     }
 
     Cliente *atual = L->head;
     int i = 1;
-    printf("\n-----------Lista de Clientes------------\n");
+
+    printf("\n\033[1;36m============================== LISTA DE CLIENTES ==============================\033[0m\n");
+    printf("\033[36m%-3s | %-30s | %-14s | %-28s | %-12s\033[0m\n",
+           "#", "NOME", "CPF", "EMAIL", "NASC.");
+    printf("\033[36m--------------------------------------------------------------------------------\033[0m\n");
 
     while(atual != NULL){
-        printf("\n Cliente %d:\n ", i);
-        printf("Nome: %s | CPF: %s | Email: %s | Data de nascimento: %s\n",atual->nome, atual->cpf, atual->email,atual->nascimento);
+        /* Mantive exatamente seus prints dentro do loop, só “enfeitei” */
+        printf("%-3d | %-30s | %-14s | %-28s | %-12s\n",
+               i, atual->nome, atual->cpf, atual->email, atual->nascimento);
         atual = atual->prox;
         i++;
     }
 }
+
+/* Funcao para listar produtos */
 
 void listar_produtos(ListaProdutos *L){
     system("cls");
 
     if (L->head == NULL) {
-        printf("\n Nao ha produtos cadastrados!\n");
+        printf("\n\033[33m[AVISO]\033[0m Nao ha produtos cadastrados!\n");
         return;
-
     }
 
     Produto *atual = L->head;
     int i = 1;
-    printf("\n-----------Lista de Produtos------------\n");
+
+    printf("\n\033[1;36m============================== LISTA DE PRODUTOS ==============================\033[0m\n");
+    printf("\033[36m%-3s | %-30s | %-6s | %-10s | %-10s\033[0m\n",
+           "#", "NOME", "COD", "PRECO", "ESTOQUE");
+    printf("\033[36m--------------------------------------------------------------------------------\033[0m\n");
 
     while(atual != NULL){
-        printf("\n Produto %d:\n ", i);
-        printf("Nome: %s | codigo: %d | preco: %.2f | quantidade: %d\n",atual->nome, atual->codigo, atual->preco, atual->quantidade);
+        printf("%-3d | %-30s | %-6d | R$ %7.2f | %-10d\n",
+               i, atual->nome, atual->codigo, atual->preco, atual->quantidade);
         atual = atual->prox;
         i++;
     }
 }
 
+/* Tela de gerenciamente de clientes */
+
 void tela_cliente(ListaCliente* lista){
     Sleep(100);
-    system("cls");
     int opcao;
 
-do{
-    printf("------Gerenciamento de clientes------\n");
-    printf("Opcoes:\n");
-    printf("1- Cadastrar cliente\n");
-    printf("2- Listar todos os clientes\n");
-    printf("3- Buscar cliente\n");
-    printf("4- Editar dados de um cliente\n");
-    printf("5- Remover cliente\n");
-    printf("6- Retornar para tela inicial\n");
-    printf("Escolha a opcao desejada: ");
-    scanf("%d", &opcao);
+    do{
+        system("cls");
 
-    switch (opcao)
-    {
-    case 1:
-        tela_cadastrar_cliente(lista);
-        break;
-    case 2:
-        listar_clientes(lista);
-        printf("\nPressione ENTER para voltar ao menu");
-        getchar();
-        getchar();
-        system("cls");
-        break;
-    case 3:
-        busca_cliente(lista);
-        printf("\nPressione ENTER para voltar ao menu");
-        getchar();
-        getchar();
-        system("cls");
-        break;
-    case 4:
-        tela_editar_cliente(lista);
-        printf("\nPressione ENTER para voltar ao menu");
-        getchar();
-        getchar();
-        system("cls");
-        break;  
-    case 5:
-        tela_remover_cliente(lista);
-        printf("\nPressione ENTER para voltar ao menu");
-        getchar();
-        getchar();
-        system("cls");
-        break;
-    case 6:
-        printf("Voltando para tela inicial.\n");
-        return;
-    default:
-        printf("Opcao invalida, tente novamente!\n");
-        Sleep(1000);
-        system("cls");
-        getchar();
-        break;
-    }
-    
- }while(opcao != 6);
+        printf("\033[1;36m======================================================================\033[0m\n");
+        printf("\033[1;36m   GERENCIAMENTO DE CLIENTES\033[0m\n");
+        printf("\033[1;36m======================================================================\033[0m\n\n");
 
+        printf("\033[1mSelecione uma opcao:\033[0m\n");
+        printf("  \033[36m[1]\033[0m Cadastrar cliente\n");
+        printf("  \033[36m[2]\033[0m Listar todos os clientes\n");
+        printf("  \033[36m[3]\033[0m Buscar cliente\n");
+        printf("  \033[36m[4]\033[0m Editar dados de um cliente\n");
+        printf("  \033[36m[5]\033[0m Remover cliente\n");
+        printf("  \033[36m[6]\033[0m Voltar\n");
+        printf("\033[36m----------------------------------------------------------------------\033[0m\n");
+        printf("Opcao: ");
+
+        scanf("%d", &opcao);
+        while(getchar() != '\n');
+
+        printf("\n");
+
+        switch (opcao)
+        {
+        case 1:
+            tela_cadastrar_cliente(lista);
+            break;
+
+        case 2:
+            listar_clientes(lista);
+            printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+            printf("Pressione ENTER para voltar ao menu...");
+            getchar();
+            break;
+
+        case 3:
+            busca_cliente(lista);
+            printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+            printf("Pressione ENTER para voltar ao menu...");
+            getchar();
+            break;
+
+        case 4:
+            tela_editar_cliente(lista);
+            printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+            printf("Pressione ENTER para voltar ao menu...");
+            getchar();
+            break;  
+
+        case 5:
+            tela_remover_cliente(lista);
+            printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+            printf("Pressione ENTER para voltar ao menu...");
+            getchar();
+            break;
+
+        case 6:
+            printf("\033[32m[OK]\033[0m Voltando para a tela inicial...\n");
+            Sleep(500);
+            return;
+
+        default:
+            printf("\033[31m[ERRO]\033[0m Opcao invalida! Tente novamente.\n");
+            Sleep(900);
+            break;
+        }
+        
+    }while(opcao != 6);
 }
+
+/* Tela de gerenciamento de produtos */
 
 void tela_produtos(ListaProdutos* lista) {
     Sleep(100);
-    system("cls");
     int opcao;
 
     do {
-        printf("------Gerenciamento de produtos------\n");
-        printf("Opcoes:\n");
-        printf("1- Cadastrar produto\n");
-        printf("2- Listar todos os produtos\n");
-        printf("3- Buscar produto\n");
-        printf("4- Editar dados de um produto\n");
-        printf("5- Remover produto\n");
-        printf("6- Retornar para tela inicial\n");
-        printf("Escolha a opcao desejada: ");
+        system("cls");
+
+        printf("\033[1;36m======================================================================\033[0m\n");
+        printf("\033[1;36m   GERENCIAMENTO DE PRODUTOS\033[0m\n");
+        printf("\033[1;36m======================================================================\033[0m\n\n");
+
+        printf("\033[1mSelecione uma opcao:\033[0m\n");
+        printf("  \033[36m[1]\033[0m Cadastrar produto\n");
+        printf("  \033[36m[2]\033[0m Listar todos os produtos\n");
+        printf("  \033[36m[3]\033[0m Buscar produto\n");
+        printf("  \033[36m[4]\033[0m Editar dados de um produto\n");
+        printf("  \033[36m[5]\033[0m Remover produto\n");
+        printf("  \033[36m[6]\033[0m Voltar\n");
+        printf("\033[36m----------------------------------------------------------------------\033[0m\n");
+        printf("Opcao: ");
+
         scanf("%d", &opcao);
-        getchar(); 
+        while(getchar() != '\n'); 
+
+        printf("\n");
 
         switch (opcao) {
             case 1:
                 tela_cadastrar_produto(lista);
                 break;
+
             case 2:
                 listar_produtos(lista);
-                printf("\nPressione ENTER para voltar ao menu");
+                printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+                printf("Pressione ENTER para voltar ao menu...");
                 getchar();
-                system("cls");
                 break;
+
             case 3:
                 busca_produto(lista);
-                printf("\nPressione ENTER para voltar ao menu");
+                printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+                printf("Pressione ENTER para voltar ao menu...");
                 getchar();
-                getchar();
-                system("cls");
                 break;
+
             case 4:
                 tela_editar_produto(lista);
-                printf("\nPressione ENTER para voltar ao menu");
+                printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+                printf("Pressione ENTER para voltar ao menu...");
                 getchar();
-                getchar();
-                system("cls");
-                break;  
+                break;
+
             case 5:
                 tela_remover_produto(lista);
-                printf("\nPressione ENTER para voltar ao menu");
+                printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+                printf("Pressione ENTER para voltar ao menu...");
                 getchar();
-                getchar();
-                system("cls");
                 break;
+
             case 6:
-                printf("Voltando para tela inicial.\n");
+                printf("\033[32m[OK]\033[0m Voltando para a tela inicial...\n");
+                Sleep(500);
                 return;
+
             default:
-                printf("Opcao invalida, tente novamente!\n");
-                Sleep(1000);
-                getchar();
-                getchar();
-                system("cls");
+                printf("\033[31m[ERRO]\033[0m Opcao invalida! Tente novamente.\n");
+                Sleep(900);
                 break;
         }
 
-    } while(opcao != 6);
+    } while (opcao != 6);
 }
 
+/* Tela do modo compra */
 
 void tela_compra(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProdutos* lista_prod){
     Sleep(100);
-    system("cls");
-
     int opcao;
-    
+
     do {
-        printf("------Modo Compra------\n");
-        printf("Opcoes:\n");
-        printf("1- Adicionar produtos ao carrinho\n");
-        printf("2- Listar produtos do carrinho\n" );
-        printf("3- Retirar produtos do carrinho\n");
-        printf("4- Retornar para tela inicial\n");
-        printf("Escolha a opcao desejada: ");
+        system("cls");
+
+        printf("\033[1;36m======================================================================\033[0m\n");
+        printf("\033[1;36m   MODO COMPRA\033[0m\n");
+        printf("\033[1;36m======================================================================\033[0m\n\n");
+
+        printf("\033[1mSelecione uma opcao:\033[0m\n");
+        printf("  \033[36m[1]\033[0m Adicionar produtos ao carrinho\n");
+        printf("  \033[36m[2]\033[0m Listar produtos do carrinho\n");
+        printf("  \033[36m[3]\033[0m Retirar produtos do carrinho\n");
+        printf("  \033[36m[4]\033[0m Voltar\n");
+        printf("\033[36m----------------------------------------------------------------------\033[0m\n");
+        printf("Opcao: ");
+
         scanf("%d", &opcao);
-        getchar();  
+        while(getchar() != '\n');
+
+        printf("\n");
 
         switch (opcao) {
             case 1:
                 tela_adicionar_produtos(lista_car, lista_cli, lista_prod);
+                printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+                printf("Pressione ENTER para voltar ao menu...");
+                getchar();
                 break;
+
             case 2:
-                listar_produtos_car(lista_car);               
-                printf("\nPressione ENTER para voltar ao menu");
+                listar_produtos_car(lista_car);
+                printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+                printf("Pressione ENTER para voltar ao menu...");
                 getchar();
-                system("cls");
                 break;
+
             case 3:
-                retirar_produto_carrinho(lista_car,lista_prod);
-                printf("\nPressione ENTER para voltar ao menu");
-                while (getchar() != '\n');
+                retirar_produto_carrinho(lista_car, lista_prod);
+                printf("\n\033[36m----------------------------------------------------------------------\033[0m\n");
+                printf("Pressione ENTER para voltar ao menu...");
                 getchar();
-                system("cls");
                 break;
+
             case 4:
-                printf("Voltando para tela inicial.\n");
+                printf("\033[32m[OK]\033[0m Voltando para a tela inicial...\n");
+                Sleep(500);
                 return;
+
             default:
-                printf("Opcao invalida, tente novamente!\n");
-                Sleep(1000);
-                getchar();
-                system("cls");
+                printf("\033[31m[ERRO]\033[0m Opcao invalida! Tente novamente.\n");
+                Sleep(900);
                 break;
         }
+
     } while (opcao != 4);
 }
+
+/* Tela inicial do programa */
 
 void tela_inicial(){
     int opcao;
@@ -759,19 +936,24 @@ void tela_inicial(){
     ListaCarrinho *lista_car = create_carrinho();
     ListaProdutos *lista_prod = create_list_prod();
     ListaCliente *lista_cli = create_list();
+
     do {
         system("cls");
-        printf("====================================================================\n");
-        printf("Bem-vindo ao sistema de gerenciamento de clientes e produtos\n");
-        printf("====================================================================\n");
-        printf("------Opcoes:------\n");
-        printf("1- Gerenciamento de Clientes\n");
-        printf("2- Gerenciamento de Produtos\n");
-        printf("3- Modo Compra\n");
-        printf("4- Sair\n");
-        printf("Escolha a opcao desejada: ");
+
+        printf("\033[1;36m======================================================================\033[0m\n");
+        printf("\033[1;36m   SISTEMA - GERENCIAMENTO DE CLIENTES, PRODUTOS E MODO COMPRA\033[0m\n");
+        printf("\033[1;36m======================================================================\033[0m\n\n");
+
+        printf("\033[1mSelecione uma opcao:\033[0m\n");
+        printf("  \033[36m[1]\033[0m Gerenciamento de Clientes\n");
+        printf("  \033[36m[2]\033[0m Gerenciamento de Produtos\n");
+        printf("  \033[36m[3]\033[0m Modo Compra\n");
+        printf("  \033[36m[4]\033[0m Sair\n");
+        printf("\033[36m----------------------------------------------------------------------\033[0m\n");
+        printf("Opcao: ");
+
         scanf("%d", &opcao);
-        getchar(); 
+        while(getchar() != '\n');  /* limpa buffer */
 
         printf("\n");
 
@@ -779,21 +961,26 @@ void tela_inicial(){
             case 1:
                 tela_cliente(lista_cli);
                 break;
+
             case 2:
                 tela_produtos(lista_prod);
                 break;
+
             case 3:
                 tela_compra(lista_car, lista_cli, lista_prod);
                 break;
+
             case 4:
-                printf("Encerrando o sistema...\n");
-                Sleep(1000);
+                printf("\033[32m[OK]\033[0m Encerrando o sistema...\n");
+                Sleep(800);
                 break;
+
             default:
-                printf("Opcao invalida, tente novamente!\n");
-                Sleep(1000);
-                system("cls");
+                printf("\033[31m[ERRO]\033[0m Opcao invalida! Tente novamente.\n");
+                Sleep(900);
                 break;
         }
+
     } while (opcao != 4);
 }
+
