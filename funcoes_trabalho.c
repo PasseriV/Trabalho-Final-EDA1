@@ -19,7 +19,7 @@ void listar_produtos_car(ListaCarrinho* lista_car){
         preco_total+=p_aux->produto->preco*p_aux->quantidade;
         quantidade_total+=p_aux->quantidade;
     }
-    printf("Total: R$%,2f, %d itens", preco_total, quantidade_total);
+    printf("Total: R$%.2f, %d itens", preco_total, quantidade_total);
 }
 
 void adicionar_produtos_car(int codigo, ListaCarrinho* lista_car, ListaProdutos* lista_prod){
@@ -33,7 +33,7 @@ void adicionar_produtos_car(int codigo, ListaCarrinho* lista_car, ListaProdutos*
         return;
     }
     int quantidade;
-    printf("Disponivel [%d]. Quantos do produto %s deseja comprar? ", codigo, produto->nome);
+    printf("Disponivel [%d]. Quantos do produto %s deseja comprar? ", produto->quantidade, produto->nome);
     scanf("%d", &quantidade);
     if(quantidade > produto->quantidade){
         printf("Quantidade pedida maior que estoque!\n");
@@ -72,12 +72,71 @@ void tela_adicionar_produtos(ListaCarrinho* lista_car, ListaCliente* lista_cli, 
     lista_car->cliente = cliente;
     printf("------Carrinho de %s------\n", lista_car->cliente->nome);
     do{
+        //o looping infinito - era bom perguntar se a pessoa quer comprar outra coisa pra terminar o while
         printf("\nDigite o codigo do produto que deseja adicionar ao carrinho: ");
         scanf("%d", &codigo);
         adicionar_produtos_car(codigo, lista_car, lista_prod);
     }while(codigo!=0);
 
 }
+
+void retirar_produto_carrinho(ListaCarrinho* lista_car, ListaProdutos* lista_prod){
+    int codigo;
+
+    if (lista_car->head == NULL) {
+        printf("Nao ha produtos no carrinho!\n");
+        Sleep(1000);
+        return;
+    }
+    ItemCarrinho *atual = lista_car->head;
+
+//listar produtos do carrinho para saber quantos ainda tem pra remover
+
+    int i = 1;
+    printf("\n-----------Lista de Produtos do Carrinho------------\n");
+
+    while(atual != NULL){
+        printf("\n Produto %d:\n ", i);
+        printf("Nome: %s | codigo: %d | quantidade: %d\n", atual->produto->nome, atual->produto->codigo, atual->quantidade);
+        atual = atual->prox;
+        i++;
+        }
+//--------------------------
+        printf("Insira o codigo do produto que deseja remover:");
+        scanf("%d", &codigo);
+        while(getchar() != '\n');
+    
+        Produto* produto = buscar_por_codigo(codigo, lista_prod);
+        if(produto == NULL){
+            printf("Produto de codigo %d nao cadastrado!\n", codigo);
+            return;
+        }
+        ItemCarrinho* anterior = NULL;
+        atual = lista_car->head;
+
+        while (atual != NULL && atual->produto->codigo != codigo) {
+            anterior = atual;
+             atual = atual->prox;
+         }
+
+        if (atual == NULL) {
+        printf("Produto de codigo %d nao esta no carrinho!\n", codigo);
+        return;
+        }
+    if (anterior == NULL) {
+        // Remover do início da lista
+        lista_car->head = atual->prox;
+    } else {
+        // Remover do meio/fim da lista
+        anterior->prox = atual->prox;
+    }
+
+    printf("Removendo produto '%s' do carrinho...\n", atual->produto->nome);
+    free(atual);
+   printf("Produto removido do carrinho.\n");
+}
+
+
 
 ListaCarrinho* create_carrinho() {
     ListaCarrinho* L = malloc(sizeof(ListaCarrinho));
@@ -96,6 +155,7 @@ ItemCarrinho* cria_item(){
 
     return item;
 }
+
 
 void remover_produto(int codigo, ListaProdutos *lista){
     Produto *p_anterior = lista->head;
@@ -129,6 +189,7 @@ void remover_produto(int codigo, ListaProdutos *lista){
     }
 }
 
+
 void tela_remover_produto(ListaProdutos *lista){
     int codigo;
     if (lista->head == NULL) {
@@ -136,6 +197,7 @@ void tela_remover_produto(ListaProdutos *lista){
         Sleep(1000);
         return;
     }
+
     printf("Digite o codigo do produto que deseja remover do sistema: ");
     scanf("%d", &codigo);
     remover_produto(codigo,lista);
@@ -175,7 +237,6 @@ void remover_cliente(char cpf[], ListaCliente *lista){
     }
 }
 
-
 void tela_remover_cliente(ListaCliente *lista){
     char cpf[18];
     if (lista->head == NULL) {
@@ -187,6 +248,7 @@ void tela_remover_cliente(ListaCliente *lista){
     scanf("%s", cpf);
     remover_cliente(cpf,lista);
 }
+
 
 void editar_produto(Produto *produto){
     free(produto->nome);
@@ -268,6 +330,7 @@ void tela_editar_cliente(ListaCliente *lista){
     }
 }
 
+
 Produto* buscar_por_codigo(int codigo, ListaProdutos *lista){
     Produto *p_aux = lista->head;
     printf("Buscando produto de codigo: %d...\n", codigo);
@@ -297,7 +360,6 @@ void busca_produto(ListaProdutos *lista){
         return;
     }
 }
-
 
 Cliente* buscar_por_cpf(char cpf[], ListaCliente *lista){
     Cliente *p_aux = lista->head;
@@ -635,7 +697,7 @@ void tela_compra(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProduto
         printf("------Modo Compra------\n");
         printf("Opcoes:\n");
         printf("1- Adicionar produtos ao carrinho\n");
-        printf("2- Listar produtos do carrinho\n");
+        printf("2- Listar produtos do carrinho\n" );
         printf("3- Retirar produtos do carrinho\n");
         printf("4- Retornar para tela inicial\n");
         printf("Escolha a opcao desejada: ");
@@ -653,7 +715,9 @@ void tela_compra(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProduto
                 system("cls");
                 break;
             case 3:
+                retirar_produto_carrinho(lista_car,lista_prod);
                 printf("\nPressione ENTER para voltar ao menu");
+                while (getchar() != '\n');
                 getchar();
                 system("cls");
                 break;

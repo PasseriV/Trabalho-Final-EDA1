@@ -31,6 +31,6 @@ void tela_cliente(ListaCliente* lista);
 void tela_produtos(ListaProdutos* lista);
 void tela_compra(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProdutos* lista_prod);
 void tela_inicial();
-
+void retirar_produto_carrinho(ListaCarrinho* lista_car, ListaProdutos* lista_prod);
 
 #endif
