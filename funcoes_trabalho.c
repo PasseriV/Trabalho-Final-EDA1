@@ -64,6 +64,7 @@ void tela_adicionar_produtos(ListaCarrinho* lista_car, ListaCliente* lista_cli, 
         return;
     }
     scanf("%s", cpf);
+    ajusta_cpf(cpf) ;
     Cliente* cliente = buscar_por_cpf(cpf, lista_cli);
     if(cliente == NULL){
         printf("Cliente de CPF %s nao cadastrado!\n", cpf);
@@ -136,8 +137,6 @@ void retirar_produto_carrinho(ListaCarrinho* lista_car, ListaProdutos* lista_pro
    printf("Produto removido do carrinho.\n");
 }
 
-
-
 ListaCarrinho* create_carrinho() {
     ListaCarrinho* L = malloc(sizeof(ListaCarrinho));
     L->cliente = malloc(sizeof(Cliente));
@@ -203,6 +202,14 @@ void tela_remover_produto(ListaProdutos *lista){
     remover_produto(codigo,lista);
 }
 
+void ajusta_cpf(char *cpf_digitado){
+    int i;
+    int j=0;
+     for(i=0; cpf_digitado[i] != '\0'; i++){
+        if(isdigit(cpf_digitado[i])){ cpf_digitado[j++]=cpf_digitado[i];}
+    }
+     cpf_digitado[j]= '\0';
+}
 
 
 void remover_cliente(char cpf[], ListaCliente *lista){
@@ -246,6 +253,7 @@ void tela_remover_cliente(ListaCliente *lista){
     }
     printf("Digite o CPF do cliente que deseja remover do sistema: ");
     scanf("%s", cpf);
+    ajusta_cpf(cpf) ;
     remover_cliente(cpf,lista);
 }
 
@@ -301,6 +309,7 @@ void editar_cliente(Cliente *cliente){
 
     printf("\nCPF: ");
     scanf(" %[^\n]", cliente->cpf);
+    ajusta_cpf(cliente->cpf) ;
     getchar();
 
     printf("Nome: ");
@@ -322,6 +331,14 @@ void tela_editar_cliente(ListaCliente *lista){
     }
     printf("Digite o CPF do cliente que deseja editar as informacoes: ");
     scanf("%s", cpf);
+    ajusta_cpf(cpf) ;
+    int i, j =0;
+
+    for(i=0; cpf[i] != '\0'; i++){
+        if(isdigit(cpf[i])){ cpf[j++]=cpf[i];}
+    }
+     cpf[j]= '\0';
+
     Cliente* cliente = buscar_por_cpf(cpf, lista);
     if(cliente) editar_cliente(cliente);
     else{
@@ -378,6 +395,7 @@ void busca_cliente(ListaCliente *lista){
     }
     printf("Digite o CPF do cliente: ");
     scanf("%s", cpf);
+    ajusta_cpf(cpf);
     Cliente *cliente =  buscar_por_cpf(cpf, lista);
     if(cliente){
         printf("Cliente encontrado!\n");
@@ -452,6 +470,7 @@ void tela_cadastrar_cliente(ListaCliente *L) {
 
         printf("\nCPF: ");
         scanf(" %[^\n]", novo_cli->cpf);
+        ajusta_cpf(novo_cli->cpf) ;
         getchar();
 
         printf("Nome: ");
