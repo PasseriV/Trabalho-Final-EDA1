@@ -41,8 +41,8 @@ void carregar_dados_txt(ListaCliente*lista_cli, ListaProdutos *lista_prod){
         produto_cadastrado->prox = lista_prod->head;
         lista_prod->head = produto_cadastrado;
     }
-    Sleep(1500);
     printf("\033[33m[AVISO]\033[0m %d clientes e %d produtos carregados para o sistema!\n", lista_cli->size, lista_prod->size);
+    Sleep(1000);
     fclose(p_arquivo);
 }
 
@@ -179,7 +179,6 @@ void tela_adicionar_produtos(ListaCarrinho* lista_car, ListaCliente* lista_cli, 
         scanf("%d", &codigo);
         getchar();
 
-        /* Mesma chamada, mesma logica */
         adicionar_produtos_car(codigo, lista_car, lista_prod);
 
     }while(codigo!=0);
@@ -756,7 +755,6 @@ void listar_clientes(ListaCliente *L){
     printf("\033[36m--------------------------------------------------------------------------------\033[0m\n");
 
     while(atual != NULL){
-        /* Mantive exatamente seus prints dentro do loop, só “enfeitei” */
         printf("%-3d | %-30s | %-14s | %-28s | %-12s\n",
                i, atual->nome, atual->cpf, atual->email, atual->nascimento);
         atual = atual->prox;
@@ -1031,7 +1029,7 @@ void tela_inicial(){
         printf("Opcao: ");
 
         scanf("%d", &opcao);
-        while(getchar() != '\n');  /* limpa buffer */
+        while(getchar() != '\n'); 
 
         printf("\n");
 
