@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <windows.h>
 #include <string.h>
+#include <ctype.h>
 #include "structs_trabalho.h"
 #include "funcoes_trabalho.h"
 
@@ -23,6 +24,7 @@ void carregar_dados_txt(ListaCliente*lista_cli, ListaProdutos *lista_prod){
         fscanf(p_arquivo, " %[^\n]", cliente_cadastrado->cpf);
         fscanf(p_arquivo, " %[^\n]", cliente_cadastrado->nome);
         fscanf(p_arquivo, " %[^\n]", cliente_cadastrado->email);
+        fscanf(p_arquivo, " %[^\n]", cliente_cadastrado->telefone);
         fscanf(p_arquivo, " %[^\n]", cliente_cadastrado->nascimento);
         cliente_cadastrado->prox = lista_cli->head;
         lista_cli->head = cliente_cadastrado;
@@ -56,10 +58,11 @@ void salvar_dados_txt(ListaCliente*lista_cli, ListaProdutos *lista_prod){
         fprintf(p_arquivo, "%s\n", p_aux_cli->cpf);
         fprintf(p_arquivo, "%s\n", p_aux_cli->nome);
         fprintf(p_arquivo, "%s\n", p_aux_cli->email);
+        fprintf(p_arquivo, "%s\n", p_aux_cli->telefone);
         fprintf(p_arquivo, "%s\n", p_aux_cli->nascimento);
         p_aux_cli=p_aux_cli->prox;
     }
-    fprintf(p_arquivo, "%d\n", lista_cli->size);
+    fprintf(p_arquivo, "%d\n", lista_prod->size);
     while(p_aux_prod != NULL){
         fprintf(p_arquivo, "%d\n", p_aux_prod->codigo);
         fprintf(p_arquivo, "%s\n", p_aux_prod->nome);
@@ -69,8 +72,6 @@ void salvar_dados_txt(ListaCliente*lista_cli, ListaProdutos *lista_prod){
     }
     fclose(p_arquivo);
 }
-
-/* Funcao para listar produtos do carrinho */
 
 void listar_produtos_car(ListaCarrinho* lista_car){
     int quantidade_total = 0;
@@ -98,8 +99,6 @@ void listar_produtos_car(ListaCarrinho* lista_car){
     printf("\033[36m--------------------------------------------------------------------------------\033[0m\n");
     printf("\033[32m[OK]\033[0m Total: \033[1mR$%.2f\033[0m, %d itens\n", preco_total, quantidade_total);
 }
-
-/* Funcao para adicionar produtos no carrinho do cliente */
 
 void adicionar_produtos_car(int codigo, ListaCarrinho* lista_car, ListaProdutos* lista_prod){
     Produto* produto = buscar_por_codigo(codigo, lista_prod);
@@ -135,8 +134,6 @@ void adicionar_produtos_car(int codigo, ListaCarrinho* lista_car, ListaProdutos*
     printf("\033[32m[OK]\033[0m %d unidade(s) de \033[1m%s\033[0m adicionada(s) ao carrinho.\n",
            item->quantidade, item->produto->nome);
 }
-
-/* Tela para receber dados para a funcao de adicionar produtos */
 
 void tela_adicionar_produtos(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProdutos* lista_prod){
     char cpf[18];
@@ -186,8 +183,6 @@ void tela_adicionar_produtos(ListaCarrinho* lista_car, ListaCliente* lista_cli, 
     printf("\n\033[32m[OK]\033[0m Retornando ao menu do Modo Compra...\n");
 }
 
-/* Funcao para retirar produtos do carrinho */
-
 void retirar_produto_carrinho(ListaCarrinho* lista_car, ListaProdutos* lista_prod){
     int codigo;
 
@@ -199,7 +194,6 @@ void retirar_produto_carrinho(ListaCarrinho* lista_car, ListaProdutos* lista_pro
 
     ItemCarrinho *atual = lista_car->head;
 
-    // listar produtos do carrinho para saber quantos ainda tem pra remover
     int i = 1;
     printf("\n\033[1;36m========================== PRODUTOS NO CARRINHO ==========================\033[0m\n");
 
@@ -236,10 +230,8 @@ void retirar_produto_carrinho(ListaCarrinho* lista_car, ListaProdutos* lista_pro
     }
 
     if (anterior == NULL) {
-        // Remover do início da lista
         lista_car->head = atual->prox;
     } else {
-        // Remover do meio/fim da lista
         anterior->prox = atual->prox;
     }
 
@@ -247,8 +239,6 @@ void retirar_produto_carrinho(ListaCarrinho* lista_car, ListaProdutos* lista_pro
     free(atual);
     printf("\033[32m[OK]\033[0m Produto removido do carrinho.\n");
 }
-
-/* Funcao para criar cada item do carrinho */
 
 ListaCarrinho* create_carrinho() { 
     ListaCarrinho* L = malloc(sizeof(ListaCarrinho)); 
@@ -266,8 +256,6 @@ ItemCarrinho* cria_item(){
 
     return item;
 }
-
-/* Funcao para remover produto do sistema */
 
 void remover_produto(int codigo, ListaProdutos *lista){
     Produto *p_anterior = lista->head;
@@ -303,8 +291,6 @@ void remover_produto(int codigo, ListaProdutos *lista){
     }
 }
 
-/* Tela para receber a funcao de remover produtos do sistema */
-
 void tela_remover_produto(ListaProdutos *lista){
     int codigo;
 
@@ -322,18 +308,14 @@ void tela_remover_produto(ListaProdutos *lista){
     remover_produto(codigo, lista);
 }
 
-/* Funcao para ajustar cpf digitado */
-
 void ajusta_cpf(char *cpf_digitado){
     int i;
     int j=0;
      for(i=0; cpf_digitado[i] != '\0'; i++){
-        if(isdigit(cpf_digitado[i])){ cpf_digitado[j++]=cpf_digitado[i];}
+        if(isdigit((unsigned char)cpf_digitado[i])){ cpf_digitado[j++]=cpf_digitado[i];}
     }
      cpf_digitado[j]= '\0';
 }
-
-/* Funcao para remover cliente do sistema */
 
 void remover_cliente(char cpf[], ListaCliente *lista){
     Cliente *p_anterior = lista->head;
@@ -369,8 +351,6 @@ void remover_cliente(char cpf[], ListaCliente *lista){
     }
 }
 
-/* Tela que recebe a funcao de remover cliente do sistema */
-
 void tela_remover_cliente(ListaCliente *lista){
     char cpf[18];
 
@@ -389,8 +369,6 @@ void tela_remover_cliente(ListaCliente *lista){
 
     remover_cliente(cpf, lista);
 }
-
-/* Funcao para editar produto do sistema */
 
 void editar_produto(Produto *produto){
     free(produto->nome);
@@ -418,8 +396,6 @@ void editar_produto(Produto *produto){
     printf("\n\033[32m[OK]\033[0m Produto atualizado com sucesso.\n");
 }
 
-/* Tela que recebe a funcao para editar produto do sistema */
-
 void tela_editar_produto(ListaProdutos *lista){
     int codigo;
 
@@ -443,17 +419,17 @@ void tela_editar_produto(ListaProdutos *lista){
     }
 }
 
-/* Funcao para editar cliente do sistema */
-
 void editar_cliente(Cliente *cliente){
     free(cliente->cpf);
     free(cliente->email);
     free(cliente->nome);
+    free(cliente->telefone);
     free(cliente->nascimento);
 
     cliente->cpf =  malloc(17 * sizeof(char));
     cliente->email = malloc(100 * sizeof(char));
     cliente->nome = malloc(100 * sizeof(char));
+    cliente->telefone = malloc(25 * sizeof(char));
     cliente->nascimento =  malloc(15 * sizeof(char));
 
     printf("\n\033[1;36m=========================== ATUALIZAR DADOS DO CLIENTE ===========================\033[0m\n");
@@ -471,6 +447,10 @@ void editar_cliente(Cliente *cliente){
     printf("\033[1mEmail:\033[0m ");
     scanf(" %[^\n]", cliente->email);
     getchar();
+
+    printf("\033[1mTelefone:\033[0m ");
+    scanf(" %[^\n]", cliente->telefone);
+    getchar();
     
     printf("\033[1mData de nascimento:\033[0m ");
     scanf(" %[^\n]", cliente->nascimento);
@@ -478,8 +458,6 @@ void editar_cliente(Cliente *cliente){
 
     printf("\n\033[32m[OK]\033[0m Cliente atualizado com sucesso.\n");
 }
-
-/* Tela que recebe a funcao de edicao de cliente */
 
 void tela_editar_cliente(ListaCliente *lista){
     char cpf[18];
@@ -499,7 +477,7 @@ void tela_editar_cliente(ListaCliente *lista){
     int i, j =0;
 
     for(i=0; cpf[i] != '\0'; i++){
-        if(isdigit(cpf[i])){ cpf[j++]=cpf[i];}
+        if(isdigit((unsigned char)cpf[i])){ cpf[j++]=cpf[i];}
     }
     cpf[j]= '\0';
 
@@ -512,12 +490,10 @@ void tela_editar_cliente(ListaCliente *lista){
     }
 }
 
-/* Funcoes que buscam produto pelo codigo */
-
 Produto* buscar_por_codigo(int codigo, ListaProdutos *lista){
     Produto *p_aux = lista->head;
 
-    printf("\033[36m[INFO]\033[0m Buscando produto de codigo: \033[1m%d\033[0m...\n", codigo);
+    printf("\033[36m[INFO]\033[0m Verificando se existe produto de codigo: \033[1m%d\033[0m...\n", codigo);
 
     while(p_aux != NULL && codigo != p_aux->codigo)
         p_aux = p_aux->prox;
@@ -549,12 +525,10 @@ void busca_produto(ListaProdutos *lista){
     }
 }
 
-/* Funcoes que buscam cliente pelo cpf */
-
 Cliente* buscar_por_cpf(char cpf[], ListaCliente *lista){
     Cliente *p_aux = lista->head;
 
-    printf("\033[36m[INFO]\033[0m Buscando cliente de CPF: \033[1m%s\033[0m...\n", cpf);
+    printf("\033[36m[INFO]\033[0m Verificando se existe cliente de CPF: \033[1m%s\033[0m...\n", cpf);
 
     while(p_aux != NULL && strcmp(p_aux->cpf, cpf))
         p_aux = p_aux->prox;
@@ -577,8 +551,8 @@ void busca_cliente(ListaCliente *lista){
     Cliente *cliente =  buscar_por_cpf(cpf, lista);
     if(cliente){
         printf("\033[32m[OK]\033[0m Cliente encontrado!\n");
-        printf("\033[36mNome:\033[0m %s | \033[36mCPF:\033[0m %s | \033[36mEmail:\033[0m %s | \033[36mNascimento:\033[0m %s\n",
-               cliente->nome, cliente->cpf, cliente->email, cliente->nascimento);
+        printf("\033[36mNome:\033[0m %s | \033[36mCPF:\033[0m %s | \033[36mEmail:\033[0m %s | \033[36mTelefone:\033[0m %s | \033[36mNascimento:\033[0m %s\n",
+               cliente->nome, cliente->cpf, cliente->email, cliente->telefone, cliente->nascimento);
         return;
     }
     else{
@@ -587,8 +561,6 @@ void busca_cliente(ListaCliente *lista){
     }
 }
 
-/* Funcao que cria elemento da lista de clientes */
-
 Cliente* criar_cliente(){
     Cliente *cli = malloc(sizeof(Cliente));
     if (cli == NULL) return NULL;
@@ -596,14 +568,13 @@ Cliente* criar_cliente(){
     cli ->cpf =  malloc(17 * sizeof(char));
     cli ->email = malloc(100 * sizeof(char));
     cli ->nome = malloc(100 * sizeof(char));
+    cli ->telefone = malloc(25 * sizeof(char));
     cli ->nascimento =  malloc(15 * sizeof(char));
     cli ->prox = NULL;
 
     return cli;
 
 }
-
-/* Funcao que cria elemento da lista de produtos */
 
 Produto* criar_produto(){
     Produto *prod = malloc(sizeof(Produto));
@@ -634,8 +605,6 @@ ListaProdutos* create_list_prod() {
 
     return L;
 }
-
-/* Tela que recebe as funcoes de cadastro de cliente */
 
 void tela_cadastrar_cliente(ListaCliente *L) {
     int qtde_cli = 0;
@@ -669,6 +638,10 @@ void tela_cadastrar_cliente(ListaCliente *L) {
         printf("\033[1mEmail:\033[0m ");
         scanf(" %[^\n]", novo_cli->email);
         getchar();
+
+        printf("\033[1mTelefone:\033[0m ");
+        scanf(" %[^\n]", novo_cli->telefone);
+        getchar();
         
         printf("\033[1mData de nascimento:\033[0m ");
         scanf(" %[^\n]", novo_cli->nascimento);
@@ -683,8 +656,6 @@ void tela_cadastrar_cliente(ListaCliente *L) {
     getchar();
 }
 
-/* Tela que recebe as funcoes para cadastrar produto */
-
 void tela_cadastrar_produto(ListaProdutos *L) {
     int qtde_prod = 0;
     
@@ -698,7 +669,6 @@ void tela_cadastrar_produto(ListaProdutos *L) {
 
         Produto *novo_prod = criar_produto();
 
-        // verif se há memoria para alocar
         if (novo_prod == NULL) {
             printf("\033[31m[ERRO]\033[0m Nao foi possivel criar produto!\n");
             return;
@@ -737,8 +707,6 @@ void tela_cadastrar_produto(ListaProdutos *L) {
     getchar();
 }
 
-/* Funcao para listar clientes */
-
 void listar_clientes(ListaCliente *L){
 
     if (L->head == NULL) {
@@ -750,19 +718,17 @@ void listar_clientes(ListaCliente *L){
     int i = 1;
 
     printf("\n\033[1;36m============================== LISTA DE CLIENTES ==============================\033[0m\n");
-    printf("\033[36m%-3s | %-30s | %-14s | %-28s | %-12s\033[0m\n",
-           "#", "NOME", "CPF", "EMAIL", "NASC.");
+    printf("\033[36m%-3s | %-26s | %-14s | %-22s | %-14s | %-12s\033[0m\n",
+           "#", "NOME", "CPF", "EMAIL", "TELEFONE", "NASC.");
     printf("\033[36m--------------------------------------------------------------------------------\033[0m\n");
 
     while(atual != NULL){
-        printf("%-3d | %-30s | %-14s | %-28s | %-12s\n",
-               i, atual->nome, atual->cpf, atual->email, atual->nascimento);
+        printf("%-3d | %-26s | %-14s | %-22s | %-14s | %-12s\n",
+               i, atual->nome, atual->cpf, atual->email, atual->telefone, atual->nascimento);
         atual = atual->prox;
         i++;
     }
 }
-
-/* Funcao para listar produtos */
 
 void listar_produtos(ListaProdutos *L){
     system("cls");
@@ -787,8 +753,6 @@ void listar_produtos(ListaProdutos *L){
         i++;
     }
 }
-
-/* Tela de gerenciamente de clientes */
 
 void tela_cliente(ListaCliente* lista){
     Sleep(100);
@@ -864,8 +828,6 @@ void tela_cliente(ListaCliente* lista){
     }while(opcao != 6);
 }
 
-/* Tela de gerenciamento de produtos */
-
 void tela_produtos(ListaProdutos* lista) {
     Sleep(100);
     int opcao;
@@ -939,8 +901,6 @@ void tela_produtos(ListaProdutos* lista) {
     } while (opcao != 6);
 }
 
-/* Tela do modo compra */
-
 void tela_compra(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProdutos* lista_prod){
     Sleep(100);
     int opcao;
@@ -1000,8 +960,6 @@ void tela_compra(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProduto
 
     } while (opcao != 4);
 }
-
-/* Tela inicial do programa */
 
 void tela_inicial(){
     int opcao;

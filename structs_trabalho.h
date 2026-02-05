@@ -4,6 +4,7 @@
 typedef struct cliente {
     char *cpf;
     char *nome;
+    char *telefone;
     char *email;
     char *nascimento;
     struct cliente *prox;
