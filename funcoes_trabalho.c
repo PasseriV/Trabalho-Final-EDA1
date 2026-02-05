@@ -5,6 +5,71 @@
 #include "structs_trabalho.h"
 #include "funcoes_trabalho.h"
 
+void carregar_dados_txt(ListaCliente*lista_cli, ListaProdutos *lista_prod){
+    printf("\033[33m[AVISO]\033[0m Carregando dados do .txt!\n");
+    FILE *p_arquivo = fopen("clientes_produtos.txt", "r");
+    if(p_arquivo == NULL){
+        printf("\033[31m[ERRO]\033[0m Arquivo .txt nao encontrado!\n");
+        printf("Para tentar novamente, renicialize o sistema.\n");
+        Sleep(1000);
+        return;
+    }
+    int numero, quantidade;
+    float num_float;
+    fscanf(p_arquivo, "%d", &quantidade);
+    lista_cli->size = quantidade;
+    for(int i = 1; i <= quantidade; i++){
+        Cliente *cliente_cadastrado = criar_cliente();
+        fscanf(p_arquivo, " %[^\n]", cliente_cadastrado->cpf);
+        fscanf(p_arquivo, " %[^\n]", cliente_cadastrado->nome);
+        fscanf(p_arquivo, " %[^\n]", cliente_cadastrado->email);
+        fscanf(p_arquivo, " %[^\n]", cliente_cadastrado->nascimento);
+        cliente_cadastrado->prox = lista_cli->head;
+        lista_cli->head = cliente_cadastrado;
+    }
+    fscanf(p_arquivo, "%d", &quantidade);
+    lista_prod->size = quantidade;
+    for(int i = 1; i <= quantidade; i++){
+        Produto *produto_cadastrado = criar_produto();
+        fscanf(p_arquivo, "%d", &numero);
+        produto_cadastrado->codigo = numero;
+        fscanf(p_arquivo, " %[^\n]", produto_cadastrado->nome);
+        fscanf(p_arquivo, "%f", &num_float);
+        produto_cadastrado->preco = num_float;
+        fscanf(p_arquivo, "%d", &numero);
+        produto_cadastrado->quantidade = numero;
+        produto_cadastrado->prox = lista_prod->head;
+        lista_prod->head = produto_cadastrado;
+    }
+    Sleep(1500);
+    printf("\033[33m[AVISO]\033[0m %d clientes e %d produtos carregados para o sistema!\n", lista_cli->size, lista_prod->size);
+    fclose(p_arquivo);
+}
+
+void salvar_dados_txt(ListaCliente*lista_cli, ListaProdutos *lista_prod){
+    printf("\033[33m[AVISO]\033[0m Salvando %d clientes e %d produtos!\n", lista_cli->size, lista_prod->size);
+    FILE *p_arquivo = fopen("clientes_produtos.txt", "w");
+    Cliente *p_aux_cli = lista_cli->head;
+    Produto *p_aux_prod = lista_prod->head;
+    fprintf(p_arquivo, "%d\n", lista_cli->size);
+    while(p_aux_cli != NULL){
+        fprintf(p_arquivo, "%s\n", p_aux_cli->cpf);
+        fprintf(p_arquivo, "%s\n", p_aux_cli->nome);
+        fprintf(p_arquivo, "%s\n", p_aux_cli->email);
+        fprintf(p_arquivo, "%s\n", p_aux_cli->nascimento);
+        p_aux_cli=p_aux_cli->prox;
+    }
+    fprintf(p_arquivo, "%d\n", lista_cli->size);
+    while(p_aux_prod != NULL){
+        fprintf(p_arquivo, "%d\n", p_aux_prod->codigo);
+        fprintf(p_arquivo, "%s\n", p_aux_prod->nome);
+        fprintf(p_arquivo, "%f\n", p_aux_prod->preco);
+        fprintf(p_arquivo, "%d\n", p_aux_prod->quantidade);
+        p_aux_prod=p_aux_prod->prox;
+    }
+    fclose(p_arquivo);
+}
+
 /* Funcao para listar produtos do carrinho */
 
 void listar_produtos_car(ListaCarrinho* lista_car){
@@ -585,16 +650,18 @@ void tela_cadastrar_cliente(ListaCliente *L) {
         printf("\n\033[36m------------------------------ CLIENTE [%d/%d] ------------------------------\033[0m\n", i+1, qtde_cli);
 
         Cliente *novo_cli = criar_cliente();
-        
-        if (novo_cli == NULL) {
-            printf("\033[31m[ERRO]\033[0m Nao foi possivel criar cliente!\n");
-            return;
-        }
 
         printf("\033[1mCPF:\033[0m ");
         scanf(" %[^\n]", novo_cli->cpf);
         ajusta_cpf(novo_cli->cpf);
         getchar();
+        Cliente *Existe_cli = buscar_por_cpf(novo_cli->cpf, L);
+        
+        if(Existe_cli != NULL){
+            printf("\033[31m[ERRO]\033[0m CPF ja cadastrado! Pressione Enter para retornar ao gerenciamento de clientes\n");
+            getchar();
+            return;
+        }
 
         printf("\033[1mNome:\033[0m ");
         scanf(" %[^\n]", novo_cli->nome);
@@ -641,6 +708,14 @@ void tela_cadastrar_produto(ListaProdutos *L) {
         printf("\033[1mCodigo:\033[0m ");
         scanf("%d", &novo_prod->codigo);
         getchar();
+
+        Produto *Existe_prod = buscar_por_codigo(novo_prod->codigo, L);
+        
+        if(Existe_prod != NULL){
+            printf("\033[31m[ERRO]\033[0m Codigo ja cadastrado! Pressione Enter para retornar ao gerenciamento de produtos\n");
+            getchar();
+            return;
+        }
 
         printf("\033[1mNome:\033[0m ");
         scanf(" %[^\n]", novo_prod->nome);
@@ -932,10 +1007,13 @@ void tela_compra(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProduto
 
 void tela_inicial(){
     int opcao;
-
+    char escolha_salvar;
     ListaCarrinho *lista_car = create_carrinho();
     ListaProdutos *lista_prod = create_list_prod();
     ListaCliente *lista_cli = create_list();
+    printf("Deseja carregar dados salvos no .txt \033[36m[Y]/[N]\033[0m?\n");
+    scanf("%c", &escolha_salvar);
+    if(escolha_salvar == 'Y') carregar_dados_txt(lista_cli, lista_prod);
 
     do {
         system("cls");
@@ -971,6 +1049,10 @@ void tela_inicial(){
                 break;
 
             case 4:
+                printf("Deseja salvar os dados \033[36m[Y]/[N]\033[0m?\n");
+                scanf("%c", &escolha_salvar);
+                getchar();
+                if(escolha_salvar == 'Y') salvar_dados_txt(lista_cli, lista_prod);
                 printf("\033[32m[OK]\033[0m Encerrando o sistema...\n");
                 Sleep(800);
                 break;
@@ -983,4 +1065,3 @@ void tela_inicial(){
 
     } while (opcao != 4);
 }
-

@@ -2,6 +2,8 @@
 #define FUNCOES_TRABALHO_H
 #include "structs_trabalho.h"
 
+void carregar_dados_txt(ListaCliente*lista_cli, ListaProdutos *lista_prod);
+void salvar_dados_txt(ListaCliente*lista_cli, ListaProdutos *lista_prod);
 void listar_produtos_car(ListaCarrinho* lista_car);
 void adicionar_produtos_car(int codigo, ListaCarrinho* lista_car, ListaProdutos* lista_prod);
 void tela_adicionar_produtos(ListaCarrinho* lista_car, ListaCliente* lista_cli, ListaProdutos* lista_prod);

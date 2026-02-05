@@ -1,0 +1,30 @@
+3
+22211144434
+Vinicius Passeri Moraes
+passerimoraes@gmail.com
+20/12/2002
+1113332221145
+Josana Souza
+jossou@gmail.com
+30/11/1999
+33322211176
+Jorge Araujo
+jorge@hotmail.com
+06/07/2001
+3
+987
+Goma de Mascar
+1.000000
+100
+1102
+Arroz
+13.000000
+10
+2002
+Chocolate Branco
+8.000000
+7
+9090
+Coca-Cola
+9.000000
+50
